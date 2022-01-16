@@ -1,12 +1,37 @@
+import * as esbuild from "esbuild-wasm";
 import ReactDOM from "react-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function App() {
+  const ref = useRef<any>();
   const [input, setInput] = useState("");
   const [code, setCode] = useState("");
 
+  const startService = async () => {
+    await esbuild.initialize({
+      worker: true,
+      wasmURL: "/esbuild.wasm",
+    });
+    ref.current = true;
+  };
+
+  useEffect(() => {
+    startService();
+  }, []);
+
   const onClick = () => {
-    console.log(input);
+    if (!ref.current) {
+      return;
+    }
+
+    esbuild
+      .transform(input, {
+        loader: "jsx",
+        target: "es2015",
+      })
+      .then((result) => {
+        setCode(result.code);
+      });
   };
 
   return (
@@ -18,7 +43,7 @@ function App() {
       <div>
         <button onClick={onClick}>Submit</button>
       </div>
-      <pre></pre>
+      <pre>{code}</pre>
     </>
   );
 }
