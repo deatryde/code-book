@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import * as esbuild from 'esbuild-wasm';
+import { unpkgPathPlugin } from '@plugins/unpkg-path-plugin';
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
@@ -31,12 +32,19 @@ function App() {
     if (!initializeRef.current) return;
 
     try {
-      const result = await esbuild.transform(input, {
-        loader: 'jsx',
-        target: 'es2015',
+      const result = await esbuild.build({
+        entryPoints: ['index.js'],
+        bundle: true,
+        write: false,
+        plugins: [unpkgPathPlugin()],
       });
 
-      setCode(result.code);
+      // const result = await esbuild.transform(input, {
+      //   loader: 'jsx',
+      //   target: 'es2015',
+      // });
+
+      setCode(result.outputFiles[0].text);
     } catch (error) {
       setError(getErrorMessage(error));
     }
@@ -48,7 +56,7 @@ function App() {
         cols={50}
         rows={20}
         value={input}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={e => setInput(e.target.value)}
       ></textarea>
       <div>
         <button onClick={onClick}>Submit</button>
