@@ -1,34 +1,38 @@
 import { useState, useEffect, useRef } from 'react';
 import * as esbuild from 'esbuild-wasm';
-import { unpkgPathPlugin } from '@plugins/unpkg-path-plugin';
+import { unpkgPathPlugin } from './plugins/unpkg-path-plugin';
 
-function getErrorMessage(error: unknown) {
+const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
   return String(error);
-}
+};
 
-function App() {
+const App = (): JSX.Element => {
   const initializeRef = useRef(false);
   const [input, setInput] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const startService = async () => {
+  const startService = (): void => {
     if (initializeRef.current) return;
 
-    esbuild
-      .initialize({
-        worker: true,
-        wasmURL: '/esbuild.wasm',
-      })
-      .then(() => (initializeRef.current = true));
+    try {
+      esbuild
+        .initialize({
+          worker: true,
+          wasmURL: '/esbuild.wasm',
+        })
+        .then(() => (initializeRef.current = true));
+    } catch (error) {
+      setError(getErrorMessage(error));
+    }
   };
 
   useEffect(() => {
     startService();
   }, []);
 
-  const onClick = async () => {
+  const onClick = async (): Promise<void> => {
     if (!initializeRef.current) return;
 
     try {
@@ -65,6 +69,6 @@ function App() {
       <pre>{error}</pre>
     </>
   );
-}
+};
 
 export default App;
